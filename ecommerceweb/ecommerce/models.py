@@ -1,9 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-
-
-class User(AbstractUser):
-    avatar = models.ImageField(upload_to='users/%Y/%m', null=True)
+from ckeditor.fields import RichTextField
 
 
 class BaseModel(models.Model):
@@ -15,118 +12,63 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Store(models.Model):
+class User(AbstractUser):
+    avatar = models.ImageField(upload_to='users/%Y/%m', null=True)
+
+
+class Store(BaseModel):
     name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
+    description = RichTextField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    logo = models.ImageField(upload_to='shop_logo', blank=True, null=True)
-    is_approved = models.BooleanField(default=False)
+    logo = models.ImageField(upload_to='stores_logo/%Y/%m', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 
-class Product(models.Model):
+class Product(BaseModel):
     name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to='products/%Y/%m', null=True)
+    description = RichTextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    store = models.ForeignKey(Store, on_delete=models.PROTECT)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='products')
+
+    def __str__(self):
+        return self.name
 
 
 class Review(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
-    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    rating = models.PositiveIntegerField(choices=((1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')))
+    comment = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.user.name} - {self.product.name}"
 
 
-# class ActionBase(BaseModel):
-#     lesson = models.ForeignKey(Product, on_delete=models.CASCADE)
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#
-#     class Meta:
-#         unique_together = ('product', 'user')
-#         abstract = True
-#
-#
-# class Like(ActionBase):
-#     liked = models.BooleanField(default=True)
-#
-#
-# class Rating(ActionBase):
-#     rate = models.SmallIntegerField(default=0)
-
-
-class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class Order(BaseModel):
+    PAYMENT_CHOICES = (
+        ('COD', 'Cash on delivery'),
+        ('PAYPAL', 'PayPal'),
+        ('STRIPE', 'Stripe'),
+        ('ZALOPAY', 'Zalo Pay'),
+        ('MOMO', 'Momo'),
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
-    payment_method = models.CharField(max_length=255)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-
-class Category(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-
-
-class ProductCategory(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-
-
-class Transaction(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
-    payment_method = models.CharField(max_length=255)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    date_ordered = models.DateTimeField(auto_now_add=True)
     is_confirmed = models.BooleanField(default=False)
-
-
-# class UserRole(models.Model):
-#     ROLE_CHOICES = (
-#         ('admin', 'Admin'),
-#         ('salesperson', 'Salesperson'),
-#         ('seller', 'Seller'),
-#         ('customer', 'Customer'),
-#     )
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     role = models.CharField(max_length=255, choices=ROLE_CHOICES)
-
-
-# class Shop(models.Model):
-#     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-#     name = models.CharField(max_length=255)
-#     description = models.TextField(blank=True)
-#     logo = models.ImageField(upload_to='shop_logo', blank=True, null=True)
-#     is_approved = models.BooleanField(default=False)
-
-
-# class Review(models.Model):
-#     RATING_CHOICES = (
-#         (1, '1'),
-#         (2, '2'),
-#         (3, '3'),
-#         (4, '4'),
-#         (5, '5'),
-#     )
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-#     store = models.ForeignKey(Store, on_delete=models.CASCADE, blank=True, null=True)
-#     rating = models.IntegerField(choices=RATING_CHOICES)
-#     comment = models.TextField(blank=True)
-#     timestamp = models.DateTimeField(auto_now_add=True)
-
-
-class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    review = models.ForeignKey(Review, on_delete=models.CASCADE)
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
 
 
 class Comparison(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
+    rating = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.store.name}"
