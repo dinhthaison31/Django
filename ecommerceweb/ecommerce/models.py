@@ -14,7 +14,7 @@ class BaseModel(models.Model):
 
 class User(AbstractUser):
     avatar = models.ImageField(upload_to='users/%Y/%m', null=True)
-
+    
 
 class Store(BaseModel):
     name = models.CharField(max_length=255)

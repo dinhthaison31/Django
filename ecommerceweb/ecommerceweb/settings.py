@@ -40,8 +40,6 @@ INSTALLED_APPS = [
     'ckeditor_uploader'
 ]
 
-CKEDITOR_UPLOAD_PATH = "ckeditor/ecommerce/"
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -80,14 +78,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ecommercedbv2',
         'USER': 'root',
-        'PASSWORD': 'son310101',
+        'PASSWORD': '7693',
         'HOST': ''  # mặc định localhost
     }
 }
 
-
 AUTH_USER_MODEL = 'ecommerce.User'
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -123,6 +119,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 MEDIA_ROOT = '%s/ecommerce/static/' % BASE_DIR
+CKEDITOR_UPLOAD_PATH = "ckeditor/ecommerce/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
